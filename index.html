@@ -28,17 +28,25 @@
         background-color: #303030;
         color: white;
       }
-      .btn-clear {
+      .btn-clearsaved {
         top: 2px;
         right: 2px;
       }
+      .btn-clear {
+        top: 2px;
+        right: 160px;
+      }
       .btn-debug {
         top: 2px;
-        right: 140px;
+        right: 295px;
       }
       .btn-overlay {
         top: 2px;
-        right: 250px;
+        right: 400px;
+      }
+      .btn-load {
+        top: 2px;
+        right: 510px;
       }
       .btn:hover {
         cursor: pointer;
@@ -56,6 +64,10 @@
   <body>
     <div id="map1"></div>
 
+    <button class="btn btn-clearsaved" onclick="localStorage.removeItem('shapes');">
+      Clear Saved Shapes
+    </button>
+
     <button class="btn btn-clear" onclick="clearLayer();">
       Clear All Shapes
     </button>
@@ -72,6 +84,10 @@
       onclick="overlay = !overlay;this.style.backgroundColor = overlay ? '#40aa40' : '#303030';setOverlay();"
     >
       Overlay Grid
+    </button>
+    
+    <button class="btn btn-load" onclick="loadShapesFromLocalStorage();">
+      Load Saved Shapes
     </button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -373,6 +389,17 @@
           });
 
           var content = parseShape(name, gtapoints);
+
+          // Save name to layer
+          var feature = {
+            type: "Feature",
+            properties: {
+              name: name,
+            },
+            geometry: layer.toGeoJSON().geometry
+          };
+          layer.feature = feature;
+
           //Show in console as well just in case
           console.log(content);
 
@@ -385,6 +412,9 @@
 
         //Add shape to map
         editableLayers.addLayer(layer);
+
+        // Save shape to localStorage
+        saveShapesToLocalStorage();
       });
 
       map.on(L.Draw.Event.EDITED, (e) => {
@@ -412,7 +442,7 @@
           } else {
             //Get the polyzone name
             //extracts from the previous popup, could use some love
-            var name = layer.getPopup().getContent().split(" |")[0].slice(44);
+            var name = layer.feature.properties.name ?? layer.getPopup().getContent().split(" |")[0].slice(44);
             //Show polyzone code on popup
             var gtapoints = [];
             layer._latlngs[0].forEach((latlng) => {
@@ -424,9 +454,45 @@
               "<code style='white-space:pre-wrap;'>" + content + "</code>",
               { minWidth: 500 }
             );
+
+            // Save shape to localStorage
+            saveShapesToLocalStorage();
           }
         });
       });
+
+      function saveShapesToLocalStorage() {
+          let shapes = editableLayers.toGeoJSON();
+          console.log(shapes);
+          localStorage.setItem("shapes", JSON.stringify(shapes));
+      }
+
+      function loadShapesFromLocalStorage() {
+        let shapes = localStorage.getItem("shapes");
+        if (shapes) {
+          shapes = JSON.parse(shapes);
+          L.geoJSON(shapes, {
+            onEachFeature: function (feature, layer) {
+              // Recreate popup with zone data
+              const name = feature.properties.name || "Unnamed";
+              //Show polyzone code on popup
+              var gtapoints = [];
+              layer._latlngs[0].forEach((latlng) => {
+                gtapoints.push(latlngToGTA(latlng));
+              });
+
+              var content = parseShape(name, gtapoints);
+
+              layer.bindPopup(
+                "<code style='white-space:pre-wrap;'>" + content + "</code>",
+                { minWidth: 500 }
+              );
+
+              editableLayers.addLayer(layer);
+            },
+          });
+        }
+      }
 
       //Center the map
       //map.setView(xy(0, 0), 3);

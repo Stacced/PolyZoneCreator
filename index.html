@@ -461,6 +461,11 @@
         });
       });
 
+      map.on(L.Draw.Event.DELETED, (e) => {
+        // Save shapes to localStorage
+        saveShapesToLocalStorage();
+      })
+
       function saveShapesToLocalStorage() {
           let shapes = editableLayers.toGeoJSON();
           console.log(shapes);

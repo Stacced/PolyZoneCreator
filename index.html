@@ -48,6 +48,10 @@
         top: 2px;
         right: 510px;
       }
+      .btn-export {
+        top: 2px;
+        right: 660px;
+      }
       .btn:hover {
         cursor: pointer;
       }
@@ -88,6 +92,10 @@
     
     <button class="btn btn-load" onclick="loadShapesFromLocalStorage();">
       Load Saved Shapes
+    </button>
+	
+    <button class="btn btn-export" onclick="exportZonesAsSVG();">
+      Export zones as SVG
     </button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -497,6 +505,42 @@
             },
           });
         }
+      }
+
+      function exportZonesAsSVG() {
+        editableLayers.getLayers().forEach((layer) => {
+          const svg = layerToSVG(layer);
+          downloadSVG(svg, layer.feature.properties.name + ".svg");
+        });
+      }
+
+      function layerToSVG(layer) {
+        // Create an SVG element
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        svg.setAttribute("viewBox", "0 0 " + map.getSize().x + " " + map.getSize().y);
+
+        // Get the layer path and add it to the SVG
+        const path = layer._path.cloneNode(true);
+        path.setAttribute("stroke", "none");
+        path.setAttribute("fill", "#ffffff");
+        path.setAttribute("fill-opacity", "1.0");
+        svg.appendChild(path);
+
+        return svg.outerHTML;
+      }
+
+      function downloadSVG(svgContent, filename) {
+        // Create a blob from the SVG
+        const blob = new Blob([svgContent], {type: "image/svg+xml;charset=utf-8"});
+        // Create a link element
+        const link = document.createElement("a");
+        // Set the link's href to a URL created from the blob
+        link.href = URL.createObjectURL(blob);
+        // Set the link's download attribute to the filename
+        link.download = filename;
+        // Simulate a click on the link to trigger the download
+        link.click();
       }
 
       //Center the map

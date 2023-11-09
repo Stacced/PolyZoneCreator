@@ -52,6 +52,10 @@
         top: 2px;
         right: 660px;
       }
+      .btn-exportwhole {
+        top: 2px;
+        right: 820px;
+      }
       .btn:hover {
         cursor: pointer;
       }
@@ -96,6 +100,9 @@
 	
     <button class="btn btn-export" onclick="exportZonesAsSVG();">
       Export zones as SVG
+    </button>
+    <button class="btn btn-exportwhole" onclick="exportZonesAsOneSVG();">
+      Export zones as one SVG
     </button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -514,6 +521,28 @@
         });
       }
 
+      function exportZonesAsOneSVG() {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        svg.setAttribute("viewBox", "0 0 " + map.getSize().x + " " + map.getSize().y);
+
+        editableLayers.getLayers().forEach((layer) => {
+          const path = layer._path.cloneNode(true);
+          // Remove all attributes for "stroke"
+          console.log(path);
+          path.removeAttribute("stroke");
+          path.removeAttribute("stroke-width");
+          path.removeAttribute("stroke-opacity");
+          path.removeAttribute("stroke-linecap");
+
+          path.setAttribute("fill", "#ffffff");
+          path.setAttribute("fill-opacity", "1.0");
+          svg.appendChild(path);
+        });
+
+        downloadSVG(svg.outerHTML, "zones.svg");
+      }
+
       function layerToSVG(layer) {
         // Create an SVG element
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -522,7 +551,13 @@
 
         // Get the layer path and add it to the SVG
         const path = layer._path.cloneNode(true);
-        path.setAttribute("stroke", "none");
+
+        // Remove all attributes for "stroke"
+        path.removeAttribute("stroke");
+        path.removeAttribute("stroke-width");
+        path.removeAttribute("stroke-opacity");
+        path.removeAttribute("stroke-linecap");
+
         path.setAttribute("fill", "#ffffff");
         path.setAttribute("fill-opacity", "1.0");
         svg.appendChild(path);

@@ -56,6 +56,14 @@
         top: 2px;
         right: 820px;
       }
+      .btn-exportjson {
+        top: 2px;
+        right: 1005px;
+      }
+      .btn-loadjson {
+        top: 2px;
+        right: 1180px;
+      }
       .btn:hover {
         cursor: pointer;
       }
@@ -101,8 +109,17 @@
     <button class="btn btn-export" onclick="exportZonesAsSVG();">
       Export zones as SVG
     </button>
+
     <button class="btn btn-exportwhole" onclick="exportZonesAsOneSVG();">
       Export zones as one SVG
+    </button>
+
+    <button class="btn btn-exportjson" onclick="exportZonesAsJSON();">
+      Export shapes as JSON
+    </button>
+
+    <button class="btn btn-loadjson" onclick="loadShapesFromJSON();">
+      Load shapes from JSON
     </button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -514,6 +531,17 @@
         }
       }
 
+      function loadShapesFromJSON() {
+        let jsonData = prompt("Enter JSON-formatted shape data");
+        try {
+          let shapes = JSON.parse(jsonData);
+          localStorage.setItem("shapes", jsonData);
+          loadShapesFromLocalStorage();
+        } catch (ex) {
+          alert("Corrupted JSON data");
+        }
+      }
+
       function exportZonesAsSVG() {
         editableLayers.getLayers().forEach((layer) => {
           const svg = layerToSVG(layer);
@@ -541,6 +569,24 @@
         });
 
         downloadSVG(svg.outerHTML, "zones.svg");
+      }
+
+      function exportZonesAsJSON() {
+        let shapes = JSON.stringify(editableLayers.toGeoJSON());
+        let file = new Blob([shapes], {type: 'application/json'});
+        let link = document.createElement("a");
+        let url = URL.createObjectURL(file);
+
+        link.href = url;
+        link.download = "export_zones" + Date.now().toString() + ".json";
+        
+        document.body.appendChild(link);
+        link.click();
+
+        setTimeout(function() {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 0);
       }
 
       function layerToSVG(layer) {
